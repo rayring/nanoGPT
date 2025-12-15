@@ -365,7 +365,7 @@ while True:
         history["val_acc"].append(losses["val_acc"])
 
         # --- Dynamic Plotting ---
-        clear_output(wait=True)  # Clear previous plots/prints
+        # clear_output(wait=True)  # Clear previous plots/prints
 
         # --- Aligned Log Output ---
         print(
