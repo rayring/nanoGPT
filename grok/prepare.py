@@ -1,7 +1,7 @@
 import os
-import torch
 import random
 import numpy as np
+from utils import get_batch
 
 OPS = ["+", "-", "*"]
 
@@ -84,3 +84,11 @@ assert VOCAB_SIZE < 64 * 1024
 print(
     f"VOCAB_SIZE={VOCAB_SIZE}, TrainTokenCount: {len(train_ids)}, ValTokenCount: {len(val_ids)}"
 )
+
+
+print("-" * 40)
+x, y = get_batch("train", 12, 5, "cpu")
+for i in range(x.shape[0]):
+    print(f"> {i}")
+    print(f"X:", "".join(map(itos.get, x[i].tolist())))
+    print(f"Y:", "".join(map(itos.get, y[i].tolist())))
