@@ -302,7 +302,7 @@ def get_lr(it):
     return min_lr + coeff * (learning_rate - min_lr)
 
 
-def plot():
+def plot_loss_acc():
     plt.figure(figsize=(16, 5))
 
     # Plot 1: Loss
@@ -364,6 +364,9 @@ while True:
         history["train_acc"].append(losses["train_acc"])
         history["val_acc"].append(losses["val_acc"])
 
+        # --- Dynamic Plotting ---
+        clear_output(wait=True)  # Clear previous plots/prints
+
         # --- Aligned Log Output ---
         print(
             f"🍒 Step {iter_num:>8} | "
@@ -373,9 +376,7 @@ while True:
             f"ValAcc: {losses['val_acc']:.4f}"
         )
 
-        # --- Dynamic Plotting ---
-        clear_output(wait=True)  # Clear previous plots/prints
-        plot()
+        plot_loss_acc()
 
         if wandb_log:
             wandb.log(
@@ -400,7 +401,7 @@ while True:
                     "best_val_loss": best_val_loss,
                     "config": config,
                 }
-                print(f"saving checkpoint to {out_dir}")
+                print(f"🍇 saving checkpoint to {out_dir}")
                 torch.save(checkpoint, os.path.join(out_dir, "ckpt.pt"))
 
     if iter_num == 0 and eval_only:
