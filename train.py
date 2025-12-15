@@ -144,7 +144,7 @@ def get_batch(split):
         x, y = x.to(device), y.to(device)
 
     for i in range(x.shape[0]):
-        print(f"get_batch x[{i}] = {x[i].item()}, y[{i}] = {y[i].item()}")
+        print(f"get_batch x[{i}] = {x[i].cpu().numpy()}, y[{i}] = {y[i].cpu().numpy()}")
     return x, y
 
 
