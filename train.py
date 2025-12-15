@@ -144,7 +144,7 @@ def get_batch(split):
         x, y = x.to(device), y.to(device)
 
     for i in range(x.shape[0]):
-        print(f"get_batch x[{i}] = {x[i]}, y[{i}] = {y[i]}")
+        print(f"get_batch x[{i}] = {x[i].item()}, y[{i}] = {y[i].item()}")
     return x, y
 
 
@@ -361,7 +361,7 @@ while True:
         )
 
         # --- Dynamic Plotting ---
-        clear_output(wait=True)  # Clear previous plots/prints
+        # clear_output(wait=True)  # Clear previous plots/prints
         plot()
 
         if wandb_log:
