@@ -3,7 +3,7 @@ import torch
 import random
 import numpy as np
 
-P = 719
+P = 397
 VOCAB_SIZE = P
 
 # 创建目录
@@ -48,6 +48,8 @@ meta = {
 }
 with open("data/grok/meta.pkl", "wb") as f:
     pickle.dump(meta, f)
+
+assert VOCAB_SIZE < 64 * 1024
 
 print(
     f"VOCAB_SIZE={VOCAB_SIZE}, 训练集大小: {len(train_data)}, 验证集大小: {len(val_data)}"
