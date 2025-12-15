@@ -153,9 +153,9 @@ def get_batch(split):
     else:
         x, y = x.to(device), y.to(device)
 
-    for i in range(x.shape[0]):
-        print(f"get_batch x[{i}] = {x[i].cpu().numpy()}, y[{i}] = {y[i].cpu().numpy()}")
-    return x, y
+    # for i in range(x.shape[0]):
+    #     print(f"get_batch x[{i}] = {x[i].cpu().numpy()}, y[{i}] = {y[i].cpu().numpy()}")
+    # return x, y
 
 
 # init these up here, can override if init_from='resume' (i.e. from a checkpoint)
