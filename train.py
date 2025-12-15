@@ -142,6 +142,8 @@ def get_batch(split):
         )
     else:
         x, y = x.to(device), y.to(device)
+
+    print(f"get_batch x = {x.shape}, y = {y.shape}")
     return x, y
 
 
@@ -435,7 +437,7 @@ while True:
         print(
             f"🥑 Iter {iter_num:>8} | Loss: {lossf:.5f} | Time: {dt:>8.2f}s | MFU: {running_mfu*100:>8.2f}%"
         )
-        
+
     iter_num += 1
     local_iter_num += 1
 

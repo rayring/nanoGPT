@@ -1,14 +1,14 @@
 # 1. 输出设置
 out_dir = "grok/out"
 eval_interval = 200  # 每n步评估一次
-eval_iters = 200  # 评估时跑多少个batch
+eval_iters = 2  # 评估时跑多少个batch
 log_interval = 20  # 每n步打印一次日志
 always_save_checkpoint = False  # 不用一直存模型，省空间
 
 # 2. 数据设置
 dataset = "grok"
 gradient_accumulation_steps = 1
-batch_size = 512  # 大一点的 batch size 有助于 grokking
+batch_size = 64  # 大一点的 batch size 有助于 grokking
 block_size = 2  # 输入长度是 2 (a, b)，我们要预测第 3 个 (c)
 
 # 3. 模型设置 (非常小的 Transformer)
