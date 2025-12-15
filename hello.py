@@ -1,5 +1,5 @@
 def main():
-    print("Hello?", f"It's {combine(1, 2)}")
+    print("Hello?", f"It's {combine(3, 5)}")
 
 
 def combine(x, y):
