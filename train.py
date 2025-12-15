@@ -301,7 +301,7 @@ def get_lr(it):
 
 
 def plot():
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(16, 5))
 
     # Plot 1: Loss
     plt.subplot(1, 2, 1)

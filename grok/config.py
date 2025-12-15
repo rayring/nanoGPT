@@ -20,11 +20,11 @@ bias = False  # 去掉 bias 更有利于数学任务
 
 # 4. 优化器设置 (Grokking 的秘诀)
 learning_rate = 1e-3
-max_iters = 10000  # 训练步数要足够长！
-lr_decay_iters = 10000
+max_iters = 20000  # 训练步数要足够长！
+lr_decay_iters = 20000
 min_lr = 1e-4
 beta2 = 0.99
-weight_decay = 0.86  # 极强的正则化，迫使参数"简化"
+weight_decay = 1.2  # 极强的正则化，迫使参数"简化"
 
 # 5. 设备
 device = "cuda"
