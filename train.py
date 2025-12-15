@@ -127,13 +127,15 @@ def get_batch(split):
         data = np.memmap(os.path.join(data_dir, "val.bin"), dtype=np.uint16, mode="r")
 
     if dataset == "grok":
-        # grok dataset is stored as fixed-length triplets [a, b, c]
-        assert block_size == 2
-        assert len(data) % 3 == 0
-        data3 = np.asarray(data).reshape(-1, 3).astype(np.int64)
-        ix = torch.randint(data3.shape[0], (batch_size,))
-        x = torch.from_numpy(data3[ix.numpy(), :2])
-        y = torch.from_numpy(data3[ix.numpy(), 1:])
+        # x: first block_size tokens, y: next-token targets
+        # only the last target supervises the loss
+        record_len = block_size + 1
+        assert len(data) % record_len == 0
+        dataN = np.asarray(data).reshape(-1, record_len).astype(np.int64)
+        ix = torch.randint(dataN.shape[0], (batch_size,))
+        x = torch.from_numpy(dataN[ix.numpy(), :block_size])
+        y = torch.from_numpy(dataN[ix.numpy(), 1:])
+        y[:, :-1] = -1
     else:
         ix = torch.randint(len(data) - block_size, (batch_size,))
         x = torch.stack(
