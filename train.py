@@ -401,8 +401,8 @@ while True:
                     "best_val_loss": best_val_loss,
                     "config": config,
                 }
-                print(f"🍇 saving checkpoint to {out_dir}")
-                torch.save(checkpoint, os.path.join(out_dir, "ckpt.pt"))
+                # print(f"🍇 saving checkpoint to {out_dir}")
+                # torch.save(checkpoint, os.path.join(out_dir, "ckpt.pt"))
 
     if iter_num == 0 and eval_only:
         break
@@ -449,9 +449,10 @@ while True:
             mfu = raw_model.estimate_mfu(batch_size * gradient_accumulation_steps, dt)
             running_mfu = mfu if running_mfu == -1.0 else 0.9 * running_mfu + 0.1 * mfu
 
-        print(
-            f"🥑 Iter {iter_num:>8} | Loss: {lossf:.5f} | Time: {dt:>8.2f}s | MFU: {running_mfu*100:>8.2f}%"
-        )
+        if iter_num < max_iters:
+            print(
+                f"🥑 Iter {iter_num:>8} | Loss: {lossf:.5f} | Time: {dt:>8.2f}s | MFU: {running_mfu*100:>8.2f}%"
+            )
 
     iter_num += 1
     local_iter_num += 1

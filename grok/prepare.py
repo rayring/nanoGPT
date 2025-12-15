@@ -3,7 +3,7 @@ import torch
 import random
 import numpy as np
 
-P = 233
+P = 211
 VOCAB_SIZE = P
 
 # 创建目录
