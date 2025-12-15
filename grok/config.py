@@ -1,7 +1,7 @@
 # 1. 输出设置
 out_dir = "grok/out"
 eval_interval = 200  # 每n步评估一次
-eval_iters = 2  # 评估时跑多少个batch
+eval_iters = 200  # 评估时跑多少个batch
 log_interval = 20  # 每n步打印一次日志
 always_save_checkpoint = False  # 不用一直存模型，省空间
 
@@ -20,7 +20,7 @@ bias = False  # 去掉 bias 更有利于数学任务
 
 # 4. 优化器设置 (Grokking 的秘诀)
 learning_rate = 1e-3
-max_iters = 10000  # 训练步数要足够长！
+max_iters = 1  # 训练步数要足够长！
 lr_decay_iters = 10000
 min_lr = 1e-4
 beta2 = 0.99
