@@ -126,27 +126,18 @@ def get_batch(split):
     else:
         data = np.memmap(os.path.join(data_dir, "val.bin"), dtype=np.uint16, mode="r")
 
-    if dataset == "grok":
-        # x: first block_size tokens, y: next-token targets
-        # only the last target supervises the loss
-        record_len = block_size + 1
-        assert len(data) % record_len == 0
-        dataN = np.asarray(data).reshape(-1, record_len).astype(np.int64)
-        ix = torch.randint(dataN.shape[0], (batch_size,))
-        x = torch.from_numpy(dataN[ix.numpy(), :block_size])
-        y = torch.from_numpy(dataN[ix.numpy(), 1:])
-        y[:, :-1] = -1
-    else:
-        ix = torch.randint(len(data) - block_size, (batch_size,))
-        x = torch.stack(
-            [torch.from_numpy((data[i : i + block_size]).astype(np.int64)) for i in ix]
-        )
-        y = torch.stack(
-            [
-                torch.from_numpy((data[i + 1 : i + 1 + block_size]).astype(np.int64))
-                for i in ix
-            ]
-        )
+    # do standard next-token prediction
+    ix = torch.randint(len(data) - block_size, (batch_size,))
+    x = torch.stack(
+        [torch.from_numpy((data[i : i + block_size]).astype(np.int64)) for i in ix]
+    )
+    y = torch.stack(
+        [
+            torch.from_numpy((data[i + 1 : i + 1 + block_size]).astype(np.int64))
+            for i in ix
+        ]
+    )
+
     if device_type == "cuda":
         # pin arrays x,y, which allows us to move them to GPU asynchronously (non_blocking=True)
         x, y = x.pin_memory().to(device, non_blocking=True), y.pin_memory().to(
