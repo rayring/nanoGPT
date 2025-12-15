@@ -1,7 +1,7 @@
 # 1. 输出设置
 out_dir = "grok/out"
-eval_interval = 200  # 每n步评估一次
-eval_iters = 20  # 评估时跑多少个batch
+eval_interval = 500  # 每n步评估一次
+eval_iters = 40  # 评估时跑多少个batch
 log_interval = 20  # 每n步打印一次日志
 always_save_checkpoint = False  # 不用一直存模型，省空间
 
