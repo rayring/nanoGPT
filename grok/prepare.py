@@ -9,7 +9,7 @@ VOCAB_SIZE = P
 # 创建目录
 os.makedirs("data/grok", exist_ok=True)
 
-# 生成所有可能的输入组合 (a + b = c)
+# 生成所有可能的输入组合 (a + b) % P = c
 data = []
 for a in range(P):
     for b in range(P):

@@ -143,7 +143,8 @@ def get_batch(split):
     else:
         x, y = x.to(device), y.to(device)
 
-    print(f"get_batch x = {x}, y = {y}")
+    for i in range(x.shape[0]):
+        print(f"get_batch x[{i}] = {x[i]}, y[{i}] = {y[i]}")
     return x, y
 
 
