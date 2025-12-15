@@ -309,7 +309,7 @@ def plot():
     plt.plot(history["iter"], history["val_loss"], label="ValLoss", color="orange")
     plt.xlabel("Steps")
     plt.ylabel("Loss")
-    plt.title("Loss Curves (Log Scale)")
+    plt.title("Loss Curves")
     plt.yscale("log")
     plt.legend()
     plt.grid(True, alpha=0.3)
@@ -320,7 +320,7 @@ def plot():
     plt.plot(history["iter"], history["val_acc"], label="ValAcc", color="orange")
     plt.xlabel("Steps")
     plt.ylabel("Accuracy")
-    plt.title("Accuracy Curves (Grokking View)")
+    plt.title("Accuracy Curves")
     plt.ylim(-0.05, 1.05)
     plt.legend()
     plt.grid(True, alpha=0.3)
@@ -372,7 +372,7 @@ while True:
         )
 
         # --- Dynamic Plotting ---
-        # clear_output(wait=True)  # Clear previous plots/prints
+        clear_output(wait=True)  # Clear previous plots/prints
         plot()
 
         if wandb_log:
