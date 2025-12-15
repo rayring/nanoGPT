@@ -1,21 +1,3 @@
-"""
-This training script can be run both on a single gpu in debug mode,
-and also in a larger training run with distributed data parallel (ddp).
-
-To run on a single GPU, example:
-$ python train.py --batch_size=32 --compile=False
-
-To run with DDP on 4 gpus on 1 node, example:
-$ torchrun --standalone --nproc_per_node=4 train.py
-
-To run with DDP on 4 gpus across 2 nodes, example:
-- Run on the first (master) node with example IP 123.456.123.456:
-$ torchrun --nproc_per_node=8 --nnodes=2 --node_rank=0 --master_addr=123.456.123.456 --master_port=1234 train.py
-- Run on the worker node:
-$ torchrun --nproc_per_node=8 --nnodes=2 --node_rank=1 --master_addr=123.456.123.456 --master_port=1234 train.py
-(If your cluster does not have Infiniband interconnect prepend NCCL_IB_DISABLE=1)
-"""
-
 import os
 import time
 import math
@@ -26,6 +8,9 @@ import numpy as np
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
+
+import matplotlib.pyplot as plt
+from IPython.display import clear_output
 
 from model import GPTConfig, GPT
 
@@ -257,17 +242,31 @@ if ddp:
 
 # helps estimate an arbitrarily accurate loss over either split using many batches
 @torch.no_grad()
-def estimate_loss():
+def estimate_loss_and_acc():
     out = {}
     model.eval()
     for split in ["train", "val"]:
         losses = torch.zeros(eval_iters)
+        correct = 0
+        total = 0
         for k in range(eval_iters):
             X, Y = get_batch(split)
             with ctx:
                 logits, loss = model(X, Y)
             losses[k] = loss.item()
+
+            # --- ACCURACY CALCULATION ---
+            # We are interested in the last token prediction for Grokking tasks
+            # logits: [B, T, V], Y: [B, T]
+            # We take the prediction at the last time step
+            logits_last = logits[:, -1, :]  # [B, V]
+            Y_last = Y[:, -1]  # [B]
+            pred = logits_last.argmax(dim=-1)
+            correct += (pred == Y_last).sum().item()
+            total += Y_last.size(0)
+
         out[split] = losses.mean()
+        out[split + "_acc"] = correct / total
     model.train()
     return out
 
@@ -287,11 +286,43 @@ def get_lr(it):
     return min_lr + coeff * (learning_rate - min_lr)
 
 
+def plot():
+    plt.figure(figsize=(12, 5))
+
+    # Plot 1: Loss
+    plt.subplot(1, 2, 1)
+    plt.plot(history["iter"], history["train_loss"], label="TrainLoss", color="blue")
+    plt.plot(history["iter"], history["val_loss"], label="ValLoss", color="orange")
+    plt.xlabel("Steps")
+    plt.ylabel("Loss")
+    plt.title("Loss Curves (Log Scale)")
+    plt.yscale("log")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+
+    # Plot 2: Accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(history["iter"], history["train_acc"], label="TrainAcc", color="blue")
+    plt.plot(history["iter"], history["val_acc"], label="ValAcc", color="orange")
+    plt.xlabel("Steps")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy Curves (Grokking View)")
+    plt.ylim(-0.05, 1.05)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+
 # logging
 if wandb_log and master_process:
     import wandb
 
     wandb.init(project=wandb_project, name=wandb_run_name, config=config)
+
+# --- VISUALIZATION SETUP ---
+history = {"iter": [], "train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
 
 # training loop
 X, Y = get_batch("train")  # fetch the very first batch
@@ -299,8 +330,8 @@ t0 = time.time()
 local_iter_num = 0  # number of iterations in the lifetime of this process
 raw_model = model.module if ddp else model  # unwrap DDP container if needed
 running_mfu = -1.0
-while True:
 
+while True:
     # determine and set the learning rate for this iteration
     lr = get_lr(iter_num) if decay_lr else learning_rate
     for param_group in optimizer.param_groups:
@@ -308,16 +339,36 @@ while True:
 
     # evaluate the loss on train/val sets and write checkpoints
     if iter_num % eval_interval == 0 and master_process:
-        losses = estimate_loss()
+        losses = estimate_loss_and_acc()
+
+        # --- Update History ---
+        history["iter"].append(iter_num)
+        history["train_loss"].append(losses["train"].item())
+        history["val_loss"].append(losses["val"].item())
+        history["train_acc"].append(losses["train_acc"])
+        history["val_acc"].append(losses["val_acc"])
+
+        # --- Aligned Log Output ---
         print(
-            f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}"
+            f"🍒 Step {iter_num:>8} | "
+            f"TrainLoss: {losses['train']:.5f} | "
+            f"ValLoss: {losses['val']:.5f} | "
+            f"TrainAcc: {losses['train_acc']:.4f} | "
+            f"ValAcc: {losses['val_acc']:.4f}"
         )
+
+        # --- Dynamic Plotting ---
+        clear_output(wait=True)  # Clear previous plots/prints
+        plot()
+
         if wandb_log:
             wandb.log(
                 {
                     "iter": iter_num,
                     "train/loss": losses["train"],
                     "val/loss": losses["val"],
+                    "train/acc": losses["train_acc"],
+                    "val/acc": losses["val_acc"],
                     "lr": lr,
                     "mfu": running_mfu * 100,  # convert to percentage
                 }
@@ -335,6 +386,7 @@ while True:
                 }
                 print(f"saving checkpoint to {out_dir}")
                 torch.save(checkpoint, os.path.join(out_dir, "ckpt.pt"))
+
     if iter_num == 0 and eval_only:
         break
 
@@ -379,9 +431,11 @@ while True:
         if local_iter_num >= 5:  # let the training loop settle a bit
             mfu = raw_model.estimate_mfu(batch_size * gradient_accumulation_steps, dt)
             running_mfu = mfu if running_mfu == -1.0 else 0.9 * running_mfu + 0.1 * mfu
+
         print(
-            f"iter {iter_num}: loss {lossf:.4f}, time {dt*1000:.2f}ms, mfu {running_mfu*100:.2f}%"
+            f"🥑 Iter {iter_num:>8} | Loss: {lossf:.5f} | Time: {dt:>8.2f}s | MFU: {running_mfu*100:>8.2f}%"
         )
+        
     iter_num += 1
     local_iter_num += 1
 
