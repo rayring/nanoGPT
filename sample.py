@@ -13,7 +13,7 @@ from model import GPTConfig, GPT
 init_from = (
     "resume"  # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
 )
-out_dir = "out"  # ignored if init_from is not 'resume'
+out_dir = "grok/out"  # ignored if init_from is not 'resume'
 start = "FILE:prompts.txt"
 num_samples = 3  # number of samples to draw
 max_new_tokens = 16  # number of tokens generated in each sample
