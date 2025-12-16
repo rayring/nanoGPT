@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from IPython.display import clear_output
 
 from model import GPTConfig, GPT
-from utils import get_batch, data_dir
+from utils import get_batch, get_meta
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -119,14 +119,8 @@ ctx = (
 iter_num = 0
 best_val_loss = 1e9
 
-# attempt to derive vocab_size from the dataset
-meta_path = os.path.join(data_dir, "meta.pkl")
-meta_vocab_size = None
-if os.path.exists(meta_path):
-    with open(meta_path, "rb") as f:
-        meta = pickle.load(f)
-    meta_vocab_size = meta["vocab_size"]
-    print(f"found vocab_size = {meta_vocab_size} (inside {meta_path})")
+meta = get_meta()
+meta_vocab_size = meta["meta_vocab_size"]
 
 # model init
 model_args = dict(

@@ -1,9 +1,7 @@
 import os
 import random
 import numpy as np
-from utils import get_batch
-
-OPS = ["+", "-", "*"]
+from utils import get_batch, token_end, token_ignore, token_eq
 
 # 创建目录
 os.makedirs("data/grok", exist_ok=True)
@@ -22,11 +20,13 @@ def one_sample(a: int, op: str, b: int) -> str:
     else:
         raise ValueError(f"unknown op: {op}")
 
-    # 每个数字/符号都是 1 个 token：例如 123 -> '1','2','3'
+    # 每个数字/符号都是1个token：例如 123 -> '1','2','3'
+    # 标准形式：12+34=+0046E
     sign = "+" if c >= 0 else "-"
-    return f"{a:02d}{op}{b:02d}={sign}{abs(c):04d}E"
+    return f"{a:02d}{op}{b:02d}{token_eq}{sign}{abs(c):04d}{token_end}"
 
 
+OPS = ["+", "-", "*"]
 samples = []
 for a in range(100):
     for b in range(100):
@@ -35,9 +35,10 @@ for a in range(100):
 
 data_str = "".join(samples)
 chars = sorted(list(set(data_str)))
-stoi = {ch: i for i, ch in enumerate(chars)}
-itos = {i: ch for i, ch in enumerate(chars)}
 VOCAB_SIZE = len(chars)
+
+stoi = {**{ch: i for i, ch in enumerate(chars)}, token_ignore: -1}
+itos = {**{i: ch for i, ch in enumerate(chars)}, -1: token_ignore}
 
 
 def encode(s: str):
@@ -47,7 +48,7 @@ def encode(s: str):
 # 数据预览
 preview_indices = random.sample(range(len(samples)), 10)
 for idx in preview_indices:
-    sample = samples[idx].rstrip("E")
+    sample = samples[idx].rstrip(token_end)
     print(f"{idx:>8}: {sample}")
 print("-" * 40)
 
@@ -90,5 +91,7 @@ print("-" * 40)
 x, y = get_batch("train", 12, 5, "cpu")
 for i in range(x.shape[0]):
     print(f"> {i}")
-    print(f"X:", "".join(map(itos.get, x[i].tolist())))
-    print(f"Y:", "".join(map(itos.get, y[i].tolist())))
+    print(f"X:", "".join(map(itos.get, x[i].tolist())) + "_")
+    print(f"Y:", "_" + "".join(map(itos.get, y[i].tolist())))
+    # print(f"X:", x[i].tolist())
+    # print(f"Y:", y[i].tolist())

@@ -1,11 +1,28 @@
 import os
 import numpy as np
+import pickle
 import torch
 from config import dataset
 
-
-# poor man's data loader
 data_dir = os.path.join("data", dataset)
+
+_meta = None
+_meta_path = os.path.join(data_dir, "meta.pkl")
+
+token_end = "E"
+token_eq = "="
+token_ignore = "∙"
+
+
+def get_meta():
+    global _meta
+    if _meta is None:
+        if os.path.exists(_meta_path):
+            with open(_meta_path, "rb") as f:
+                _meta = pickle.load(f)
+        else:
+            raise ValueError(f"{_meta_path} not found")
+    return _meta
 
 
 def get_batch(split, block_size, batch_size, device):
@@ -27,6 +44,20 @@ def get_batch(split, block_size, batch_size, device):
             for i in ix
         ]
     )
+
+    # 对不可预测的token，用token_ignore替换F
+    stoi = get_meta()["stoi"]
+    end_id = stoi[token_end]
+    eq_id = stoi[token_eq]
+    ignore_id = stoi[token_ignore]
+    for i in range(batch_size):
+        end_pos = (y[i] == end_id).nonzero(as_tuple=False)
+        eq_pos = (y[i] == eq_id).nonzero(as_tuple=False)
+        print(end_pos.item(), eq_pos.item())
+        if (end_pos.item() > eq_pos.item() and end_pos.item() < block_size - 1) or (
+            eq_pos.item() == block_size - 1
+        ):
+            y[i, -1] = ignore_id
 
     if device == "cuda":
         # pin arrays x,y, which allows us to move them to GPU asynchronously (non_blocking=True)
