@@ -45,7 +45,24 @@ def get_batch(split, block_size, batch_size, device):
         ]
     )
 
-    print("xyz")
+    print('cat')
+
+    # 对不可预测的token，用token_ignore替换F
+    stoi = get_meta()["stoi"]
+    end_id = stoi[token_end]
+    eq_id = stoi[token_eq]
+    ignore_id = stoi[token_ignore]
+    for i in range(batch_size):
+        end_pos = (y[i] == end_id).nonzero(as_tuple=False)
+        eq_pos = (y[i] == eq_id).nonzero(as_tuple=False)
+        if end_pos.numel() == 0 or eq_pos.numel() == 0:
+            continue
+        end_pos = end_pos[0, 0].item()
+        eq_pos = eq_pos[0, 0].item()
+        if (end_pos > eq_pos and end_pos < block_size - 1) or (
+            eq_pos == block_size - 1
+        ):
+            y[i, -1] = ignore_id
 
     if device == "cuda":
         # pin arrays x,y, which allows us to move them to GPU asynchronously (non_blocking=True)
