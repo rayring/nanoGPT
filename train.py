@@ -12,8 +12,6 @@ import matplotlib.pyplot as plt
 from model import GPTConfig, GPT
 from grok.utils import get_batch, get_meta
 
-print('dog')
-
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
 # I/O
