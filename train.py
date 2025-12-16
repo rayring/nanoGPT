@@ -8,9 +8,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 
 import matplotlib.pyplot as plt
+from IPython.display import Image, display
 
 from model import GPTConfig, GPT
 from grok.utils import get_batch, get_meta
+
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -273,7 +275,8 @@ def plot_loss_acc():
     plt.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig("out/plot.png")
+    display(Image(filename="out/plot.png"))
 
 
 # logging
