@@ -45,8 +45,6 @@ def get_batch(split, block_size, batch_size, device):
         ]
     )
 
-    print('cat')
-
     # 对不可预测的token，用token_ignore替换F
     stoi = get_meta()["stoi"]
     end_id = stoi[token_end]
