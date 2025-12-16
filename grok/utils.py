@@ -53,7 +53,6 @@ def get_batch(split, block_size, batch_size, device):
     for i in range(batch_size):
         end_pos = (y[i] == end_id).nonzero(as_tuple=False)
         eq_pos = (y[i] == eq_id).nonzero(as_tuple=False)
-        print(end_pos.item(), eq_pos.item())
         if (end_pos.item() > eq_pos.item() and end_pos.item() < block_size - 1) or (
             eq_pos.item() == block_size - 1
         ):
