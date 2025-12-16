@@ -120,7 +120,7 @@ iter_num = 0
 best_val_loss = 1e9
 
 meta = get_meta()
-meta_vocab_size = meta["meta_vocab_size"]
+meta_vocab_size = meta["vocab_size"]
 
 # model init
 model_args = dict(
