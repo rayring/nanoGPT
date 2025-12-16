@@ -3,8 +3,8 @@ import random
 import numpy as np
 from .utils import get_batch, token_end, token_ignore, token_eq
 
-# 创建目录
 os.makedirs("data/grok", exist_ok=True)
+os.makedirs("out", exist_ok=True)
 
 
 def one_sample(a: int, op: str, b: int) -> str:
