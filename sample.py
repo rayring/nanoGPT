@@ -111,17 +111,20 @@ for idx, ids in enumerate(prompt_ids):
 # run generation
 with torch.no_grad():
     with ctx:
+        results = {i: [] for i in range(len(prompts))}
         for k in range(num_samples):
             for seqlen, indices in sorted(groups.items()):
                 prompt_groups = [prompt_ids[i] for i in indices]
-                grouped_prompts = [prompts[i] for i in indices]
                 x = torch.tensor(prompt_groups, dtype=torch.long, device=device)
                 y = model.generate(
                     x, max_new_tokens, temperature=temperature, top_k=top_k
                 )
                 for row, i in enumerate(indices):
-                    print(grouped_prompts[row])
-                    print("=" * 20)
-                    print(decode(y[row].tolist()))
-                    print("-" * 20)
-                print()
+                    results[i].append(decode(y[row].tolist()))
+
+        for i, prompt in enumerate(prompts):
+            print(prompt)
+            print("-" * 20)
+            for text in results[i]:
+                print(text)
+            print()
