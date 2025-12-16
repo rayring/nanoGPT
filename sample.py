@@ -113,14 +113,15 @@ with torch.no_grad():
     with ctx:
         for k in range(num_samples):
             for seqlen, indices in sorted(groups.items()):
-                x = torch.tensor(
-                    [prompt_ids[i] for i in indices],
-                    dtype=torch.long,
-                    device=device,
-                )
+                prompt_groups = [prompt_ids[i] for i in indices]
+                grouped_prompts = [prompts[i] for i in indices]
+                x = torch.tensor(prompt_groups, dtype=torch.long, device=device)
                 y = model.generate(
                     x, max_new_tokens, temperature=temperature, top_k=top_k
                 )
                 for row, i in enumerate(indices):
+                    print(grouped_prompts[row])
+                    print("=" * 20)
                     print(decode(y[row].tolist()))
-                    print("---------------")
+                    print("-" * 20)
+                print()
