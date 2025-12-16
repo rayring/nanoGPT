@@ -10,7 +10,7 @@ from torch.distributed import init_process_group, destroy_process_group
 import matplotlib.pyplot as plt
 
 from model import GPTConfig, GPT
-from grok.utils import get_batch, get_meta
+from grok.utils import get_batch, get_meta, estimate_accuracy
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -216,18 +216,13 @@ def estimate_loss_and_acc():
                 logits, loss = model(X, Y)
             losses[k] = loss.item()
 
-            # --- ACCURACY CALCULATION ---
-            # We are interested in the last token prediction for Grokking tasks
             # logits: [B, T, V], Y: [B, T]
-            # We take the prediction at the last time step
-            logits_last = logits[:, -1, :]  # [B, V]
-            Y_last = Y[:, -1]  # [B]
-            pred = logits_last.argmax(dim=-1)
-            correct += (pred == Y_last).sum().item()
-            total += Y_last.size(0)
+            c, t = estimate_accuracy(logits, Y, ignore_index=-1)
+            correct += c
+            total += t
 
         out[split] = losses.mean()
-        out[split + "_acc"] = correct / total
+        out[split + "_acc"] = (correct / total) if total > 0 else 0.0
     model.train()
     return out
 

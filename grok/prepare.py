@@ -4,7 +4,6 @@ import numpy as np
 from .utils import get_batch, token_end, token_ignore, token_eq
 
 os.makedirs("data/grok", exist_ok=True)
-os.makedirs("out", exist_ok=True)
 
 
 def one_sample(a: int, op: str, b: int) -> str:
@@ -26,7 +25,7 @@ def one_sample(a: int, op: str, b: int) -> str:
     return f"{a:02d}{op}{b:02d}{token_eq}{sign}{abs(c):04d}{token_end}"
 
 
-OPS = ["+", "-"]
+OPS = ["+", "-", "*"]
 samples = []
 for a in range(100):
     for b in range(100):

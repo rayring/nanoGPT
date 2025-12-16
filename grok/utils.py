@@ -50,6 +50,7 @@ def get_batch(split, block_size, batch_size, device):
     end_id = stoi[token_end]
     eq_id = stoi[token_eq]
     ignore_id = stoi[token_ignore]
+
     for i in range(batch_size):
         end_pos = (y[i] == end_id).nonzero(as_tuple=False)
         eq_pos = (y[i] == eq_id).nonzero(as_tuple=False)
@@ -71,3 +72,16 @@ def get_batch(split, block_size, batch_size, device):
         x, y = x.to(device), y.to(device)
 
     return x, y
+
+
+def estimate_accuracy(
+    logits: torch.Tensor, targets: torch.Tensor, ignore_index: int = -1
+):
+    pred = logits.argmax(dim=-1)
+    mask = targets.ne(ignore_index)
+    if mask.any():
+        correct = pred.eq(targets).logical_and(mask).sum().item()
+        total = mask.sum().item()
+        return correct, total
+
+    return 0, 0
