@@ -13,7 +13,6 @@ token_end = "E"
 token_eq = "="
 token_ignore = "∙"
 
-print('cat')
 
 def get_meta():
     global _meta
