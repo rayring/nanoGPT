@@ -1,7 +1,7 @@
 import os
 import random
 import numpy as np
-from utils import get_batch, token_end, token_ignore, token_eq
+from .utils import get_batch, token_end, token_ignore, token_eq
 
 # 创建目录
 os.makedirs("data/grok", exist_ok=True)

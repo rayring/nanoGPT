@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pickle
 import torch
-from config import dataset
+from .config import dataset
 
 data_dir = os.path.join("data", dataset)
 
