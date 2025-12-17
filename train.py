@@ -327,7 +327,7 @@ while True:
                     "mfu": running_mfu * 100,  # convert to percentage
                 }
             )
-        if always_save_checkpoint or iter_num + 1 > max_iters:
+        if always_save_checkpoint or iter_num % 1000 == 0 or iter_num + 1 > max_iters:
             best_val_loss = losses["val"]
             if iter_num > 0:
                 checkpoint = {
@@ -338,8 +338,9 @@ while True:
                     "best_val_loss": best_val_loss,
                     "config": config,
                 }
-                print(f"🍇 saving checkpoint to {out_dir}")
-                torch.save(checkpoint, os.path.join(out_dir, "ckpt.pt"))
+                filename = f"ckpt_{iter_num:08d}.pt"
+                print(f"🍇 saving checkpoint to {out_dir}/{filename}")
+                torch.save(checkpoint, os.path.join(out_dir, filename))
 
     if iter_num == 0 and eval_only:
         break

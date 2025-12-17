@@ -30,8 +30,9 @@ def get_batch(split, block_size, batch_size, device):
     filename = "train.bin" if split == "train" else "val.bin"
     data = np.memmap(os.path.join(data_dir, filename), dtype=np.uint16, mode="r")
 
-    # 2. 随机切片
-    ix = torch.randint(len(data) - block_size, (batch_size,))
+    # 2. 按 block 获取
+    max_ix = (len(data) - block_size) // block_size
+    ix = torch.randint(0, max_ix, (batch_size,)) * block_size
 
     # 转换 Tensor
     to_tensor = lambda data_slice: torch.from_numpy(data_slice.astype(np.int64))
@@ -48,13 +49,8 @@ def get_batch(split, block_size, batch_size, device):
     ignore_id = stoi[token_ignore]
 
     # 4. 应用 Mask
-    # 对不可预测部分用token_ignore替换
-    is_eq = (x == eq_id).long()
-    is_end = (x == end_id).long()
-    has_seen_eq = (torch.cumsum(is_eq, dim=1) > 0).long()
-    clean_end = is_end * has_seen_eq
-    mask = (torch.cumsum(is_eq, dim=1) - torch.cumsum(clean_end, dim=1)) > 0
-    y[~mask] = ignore_id
+    y[:, :5] = ignore_id
+    y[:, -1] = ignore_id
 
     if device == "cuda":
         x = x.pin_memory().to(device, non_blocking=True)
