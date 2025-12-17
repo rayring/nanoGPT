@@ -306,10 +306,10 @@ while True:
 
         # --- Aligned Log Output ---
         print(
-            f"🍒 Step {iter_num:>8} | "
-            f"TrainLoss: {losses['train']:.5f} | "
-            f"ValLoss: {losses['val']:.5f} | "
-            f"TrainAcc: {losses['train_acc']:.4f} | "
+            f"🍒 Step {iter_num}, "
+            f"TrainLoss: {losses['train']:.5f}, "
+            f"ValLoss: {losses['val']:.5f}, "
+            f"TrainAcc: {losses['train_acc']:.4f}, "
             f"ValAcc: {losses['val_acc']:.4f}"
         )
 
@@ -338,7 +338,7 @@ while True:
                     "best_val_loss": best_val_loss,
                     "config": config,
                 }
-                filename = f"ckpt_{iter_num:08d}.pt"
+                filename = f"ckpt_{iter_num//1000:02d}.pt"
                 print(f"🍇 saving checkpoint to {out_dir}/{filename}")
                 torch.save(checkpoint, os.path.join(out_dir, filename))
 
