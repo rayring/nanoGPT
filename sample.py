@@ -48,7 +48,7 @@ ctx = (
 
 # model
 # init from a model saved in a specific directory
-ckpt_path = os.path.join(out_dir, "ckpt2.pt")
+ckpt_path = os.path.join(out_dir, "ckpt.pt")
 checkpoint = torch.load(ckpt_path, map_location=device)
 gptconf = GPTConfig(**checkpoint["model_args"])
 model = GPT(gptconf)

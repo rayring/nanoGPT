@@ -12,9 +12,9 @@ batch_size = 256  # 字符级序列更长，适当减小 batch
 block_size = 12  # 覆盖形如 "00+00=0\n" 到 "99*99=9801\n" 的最长长度
 
 # 3. 模型设置 (非常小的 Transformer)
-n_layer = 2
-n_head = 4
-n_embd = 128
+n_layer = 4
+n_head = 6
+n_embd = 384
 dropout = 0.0
 bias = False  # 去掉 bias 更有利于数学任务
 
