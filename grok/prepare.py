@@ -48,7 +48,7 @@ def encode(s: str):
 preview_indices = random.sample(range(len(samples)), 10)
 for idx in preview_indices:
     sample = samples[idx].rstrip(token_end)
-    print(f"{idx:>8}: {sample}")
+    print(sample + token_end)
 print("-" * 40)
 
 # 打乱数据
