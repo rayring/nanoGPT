@@ -4,13 +4,15 @@ Sample from a trained model
 
 import os
 from contextlib import nullcontext
+import numpy as np
 import torch
 from model import GPTConfig, GPT
-from grok.utils import get_meta
+from grok.utils import get_meta, data_dir, token_eq, token_end
+from grok.config import block_size
 
 # -----------------------------------------------------------------------------
+start = ["FILE:prompts.txt", "BIN:train", "BIN:val"][0]
 out_dir = "grok/out"  # ignored if init_from is not 'resume'
-start = "FILE:prompts.txt" # FILE or VAL
 num_samples = 3  # number of samples to draw
 max_new_tokens = 6  # number of tokens generated in each sample
 temperature = (
@@ -19,7 +21,7 @@ temperature = (
 top_k = (
     200  # retain only the top_k most likely tokens, clamp others to have 0 probability
 )
-seed = 1337
+seed = 233
 device = "cpu"  # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
 dtype = (
     "bfloat16"
@@ -66,23 +68,56 @@ stoi, itos = meta["stoi"], meta["itos"]
 encode = lambda s: [stoi[c] for c in s]
 decode = lambda l: "".join([itos[i] for i in l])
 
-# encode prompts
-with open(start[5:], "r", encoding="utf-8") as f:
-    raw_lines = [line.rstrip("\n") for line in f]
-raw_lines = [p for p in raw_lines if p.strip() != ""]
-if len(raw_lines) == 0:
-    raise ValueError(f"No non-empty prompts found in {start[5:]}")
 
-prompts = []
-expected = []
-for line in raw_lines:
-    if "=" not in line:
-        raise ValueError(
-            f"Invalid prompts.txt line (expected 'AAOBB=SCCCCE' format): {line!r}"
-        )
-    left, right = line.split("=", 1)
-    prompts.append(left + "=")
-    expected.append(right)
+def get_prompts_by_file():
+    with open(start[5:], "r", encoding="utf-8") as f:
+        raw_lines = [line.rstrip("\n") for line in f]
+    raw_lines = [p for p in raw_lines if p.strip() != ""]
+    assert len(raw_lines) > 0
+
+    prompts = []
+    expected = []
+    for line in raw_lines:
+        assert token_eq in line
+        left, right = line.split(token_eq, 1)
+        prompts.append(left + token_eq)
+        expected.append(right)
+
+    return prompts, expected
+
+
+def get_prompts_by_bin(source, n_grep):
+    # sample full, aligned sequences from the dataset so we can split at '=' reliably
+    bin_path = os.path.join(data_dir, f"{source}.bin")
+    data = np.memmap(bin_path, dtype=np.uint16, mode="r")
+
+    n_samples = len(data) // block_size
+    ix = torch.randint(n_samples, (n_grep,))
+    x = torch.stack(
+        [
+            torch.from_numpy(
+                (data[i * block_size : (i + 1) * block_size]).astype(np.int64)
+            )
+            for i in ix.tolist()
+        ]
+    ).to(device)
+
+    prompts = []
+    expected = []
+    for row in x:
+        s = decode(row.tolist())
+        left, right = s.split(token_eq, 1)
+        assert right.endswith(token_end)
+        prompts.append(left + token_eq)
+        expected.append(right)
+
+    return prompts, expected
+
+
+if start.startswith("FILE:"):
+    prompts, expected = get_prompts_by_file()
+else:
+    prompts, expected = get_prompts_by_bin(start[4:], 100)
 
 prompt_ids = [encode(p) for p in prompts]
 groups = {}
@@ -106,7 +141,7 @@ with torch.no_grad():
         total = len(prompts) * num_samples
         correct = 0
         for i, prompt in enumerate(prompts):
-            print(f"{prompt}{expected[i]}")
+            print(f"{i+1:04d} {prompt}{expected[i]}")
             print("-" * 20)
             for text in results[i]:
                 completion = text[len(prompt) : len(prompt) + len(expected[i])]
