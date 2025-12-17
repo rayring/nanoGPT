@@ -22,7 +22,8 @@ def one_sample(a: int, op: str, b: int) -> str:
     # 每个数字/符号都是1个token：例如 123 -> '1','2','3'
     # 标准形式：12+34=+0046E
     sign = "+" if c >= 0 else "-"
-    return f"{a:02d}{op}{b:02d}{token_eq}{sign}{abs(c):04d}{token_end}"
+    answer = "".join(reversed(f"{sign}{abs(c):04d}"))
+    return f"{a:02d}{op}{b:02d}{token_eq}{answer}{token_end}"
 
 
 OPS = ["+", "-", "*"]
@@ -87,10 +88,10 @@ print(
 
 
 print("-" * 40)
-x, y = get_batch("train", 12, 5, "cpu")
+x, y = get_batch("train", 12, 10, "cpu")
 for i in range(x.shape[0]):
-    print(f"> {i}")
+    # print(f"> {i}")
     print(f"X:", "".join(map(itos.get, x[i].tolist())) + "_")
-    print(f"Y:", "_" + "".join(map(itos.get, y[i].tolist())))
+    # print(f"Y:", "_" + "".join(map(itos.get, y[i].tolist())))
     # print(f"X:", x[i].tolist())
     # print(f"Y:", y[i].tolist())
