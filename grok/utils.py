@@ -26,50 +26,42 @@ def get_meta():
 
 
 def get_batch(split, block_size, batch_size, device):
-    # We recreate np.memmap every batch to avoid a memory leak, as per
-    # https://stackoverflow.com/questions/45132940/numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
-    if split == "train":
-        data = np.memmap(os.path.join(data_dir, "train.bin"), dtype=np.uint16, mode="r")
-    else:
-        data = np.memmap(os.path.join(data_dir, "val.bin"), dtype=np.uint16, mode="r")
+    # 1. 加载数据 (保持原有的 memmap 逻辑以防内存泄漏)
+    filename = "train.bin" if split == "train" else "val.bin"
+    data = np.memmap(os.path.join(data_dir, filename), dtype=np.uint16, mode="r")
 
-    # do standard next-token prediction
+    # 2. 随机切片
     ix = torch.randint(len(data) - block_size, (batch_size,))
-    x = torch.stack(
-        [torch.from_numpy((data[i : i + block_size]).astype(np.int64)) for i in ix]
-    )
-    y = torch.stack(
-        [
-            torch.from_numpy((data[i + 1 : i + 1 + block_size]).astype(np.int64))
-            for i in ix
-        ]
-    )
 
-    # 对不可预测的token，用token_ignore替换F
+    # 转换 Tensor
+    to_tensor = lambda data_slice: torch.from_numpy(data_slice.astype(np.int64))
+    x_stack = [to_tensor(data[i : i + block_size]) for i in ix]
+    y_stack = [to_tensor(data[i + 1 : i + 1 + block_size]) for i in ix]
+
+    x = torch.stack(x_stack)
+    y = torch.stack(y_stack)
+
+    # 3. 获取关键 Token ID
     stoi = get_meta()["stoi"]
-    end_id = stoi[token_end]
     eq_id = stoi[token_eq]
+    end_id = stoi[token_end]
     ignore_id = stoi[token_ignore]
 
-    for i in range(batch_size):
-        end_pos = (y[i] == end_id).nonzero(as_tuple=False)
-        eq_pos = (y[i] == eq_id).nonzero(as_tuple=False)
-        if end_pos.numel() == 0 or eq_pos.numel() == 0:
-            continue
-        end_pos = end_pos[0, 0].item()
-        eq_pos = eq_pos[0, 0].item()
-        if (end_pos > eq_pos and end_pos < block_size - 1) or (
-            eq_pos == block_size - 1
-        ):
-            y[i, -1] = ignore_id
+    # 4. 应用 Mask
+    # 对不可预测部分用token_ignore替换
+    is_eq = (x == eq_id).long()
+    is_end = (x == end_id).long()
+    has_seen_eq = (torch.cumsum(is_eq, dim=1) > 0).long()
+    clean_end = is_end * has_seen_eq
+    mask = (torch.cumsum(is_eq, dim=1) - torch.cumsum(clean_end, dim=1)) > 0
+    y[~mask] = ignore_id
 
     if device == "cuda":
-        # pin arrays x,y, which allows us to move them to GPU asynchronously (non_blocking=True)
-        x, y = x.pin_memory().to(device, non_blocking=True), y.pin_memory().to(
-            device, non_blocking=True
-        )
+        x = x.pin_memory().to(device, non_blocking=True)
+        y = y.pin_memory().to(device, non_blocking=True)
     else:
-        x, y = x.to(device), y.to(device)
+        x = x.to(device)
+        y = y.to(device)
 
     return x, y
 
