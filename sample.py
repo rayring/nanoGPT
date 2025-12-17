@@ -3,15 +3,17 @@ Sample from a trained model
 """
 
 import os
-from contextlib import nullcontext
+import sys
 import numpy as np
 import torch
+from contextlib import nullcontext
 from model import GPTConfig, GPT
 from grok.utils import get_meta, data_dir, token_eq, token_end
 from grok.config import block_size
 
 # -----------------------------------------------------------------------------
-start = ["FILE:prompts.txt", "BIN:train", "BIN:val"][0]
+choice = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+start = ["FILE:prompts.txt", "BIN:train", "BIN:val"][choice]
 out_dir = "grok/out"  # ignored if init_from is not 'resume'
 num_samples = 3  # number of samples to draw
 max_new_tokens = 6  # number of tokens generated in each sample
