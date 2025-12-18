@@ -8,8 +8,8 @@ always_save_checkpoint = False  # 不用一直存模型，省空间
 # 2. 数据设置
 dataset = "grok"
 gradient_accumulation_steps = 1
-batch_size = 256  # 字符级序列更长，适当减小 batch
-block_size = 20
+batch_size = 512  # 建议 512 或更大，直到显存占满 80% 左右
+block_size = 32  # 建议 8 或 32 的倍数，以保证 GPU 处理效率
 
 # 3. 模型设置 (非常小的 Transformer)
 n_layer = 4

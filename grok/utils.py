@@ -12,7 +12,7 @@ _meta_path = os.path.join(data_dir, "meta.pkl")
 token_end = "E"
 token_eq = "="
 token_ignore = "∙"
-token_pad = "P"
+token_pad = "~"
 
 
 def get_meta():
