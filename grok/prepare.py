@@ -1,77 +1,84 @@
 import os
+import pickle
 import random
 import numpy as np
-from grok.utils import get_batch, token_end, token_ignore, token_eq
+
+# 假设这些 token 定义在 grok.utils 里，这里直接使用
+# 如果没有，请手动定义: token_end='E', token_eq='=', token_ignore='_', token_pad='P'
+from grok.utils import get_batch, token_end, token_ignore, token_eq, token_pad
+from grok.config import block_size
 
 os.makedirs("data/grok", exist_ok=True)
+assert block_size >= 20  # 确认足以容纳最长的 99*99*99=970299
+random.seed(42)  # 保证可复现
 
 
-def one_sample(a: int, op: str, b: int) -> str:
-    assert a in range(0, 100)
-    assert b in range(0, 100)
+def one_sample(nums: list, ops: list) -> str:
+    """
+    nums: 数字列表，例如 [1, 2, 3]
+    ops: 符号列表，例如 ['+', '*']
+    返回: "1+2*3=+7EPPPP..."
+    """
+    # 1. 构建算式字符串
+    expression = str(nums[0])
+    for i, op in enumerate(ops):
+        expression += f"{op}{str(nums[i+1])}"
 
-    if op == "+":
-        c = a + b
-    elif op == "-":
-        c = a - b
-    elif op == "*":
-        c = a * b
-    else:
-        raise ValueError(f"unknown op: {op}")
+    # 2. 计算结果
+    c = int(eval(expression))
 
-    # 每个数字/符号都是1个token：例如 123 -> '1','2','3'
-    # 标准形式：12+34=+0046E
+    # 3. 格式化答案
     sign = "+" if c >= 0 else "-"
-    answer = f"{sign}{abs(c):04d}"
-    answer2 = "".join(reversed(answer))
-    return f"{a:02d}{op}{b:02d}{token_eq}{answer}{token_end}"
+    answer = f"{sign}{abs(c)}"
+    text = f"{expression}{token_eq}{answer}{token_end}"
+
+    # 5. Padding填充，实现定长
+    if len(text) > block_size:
+        text = text[:block_size]
+
+    return text.ljust(block_size, token_pad)
 
 
+MAX_NUM = 100
 OPS = ["+", "-", "*"]
 samples = []
-for a in range(100):
-    for b in range(100):
-        for op in OPS:
-            samples.append(one_sample(a, op, b))
 
-data_str = "".join(samples)
+# 1. 遍历所有 1-op 情况 (保证基础算术能力覆盖)
+for a in range(MAX_NUM):
+    for b in range(MAX_NUM):
+        for op in OPS:
+            samples.append(one_sample([a, b], [op]))
+
+# 2. 随机采样 2-op 情况 (混合运算)
+# 数量: 追加 30,000 条，保持数据集平衡
+# 组合: a op1 b op2 c
+for _ in range(30000):
+    nums = [random.randint(0, MAX_NUM - 1) for _ in range(3)]
+    ops = [random.choice(OPS) for _ in range(2)]
+    samples.append(one_sample(nums, ops))
+
+# 打乱数据
+random.shuffle(samples)
+
+data_str = "".join(samples) + token_pad
 chars = sorted(list(set(data_str)))
 VOCAB_SIZE = len(chars)
+assert VOCAB_SIZE < 64 * 1024
 
 stoi = {**{ch: i for i, ch in enumerate(chars)}, token_ignore: -1}
 itos = {**{i: ch for i, ch in enumerate(chars)}, -1: token_ignore}
+encode = lambda s: [stoi[c] for c in s]
 
-
-def encode(s: str):
-    return [stoi[c] for c in s]
-
-
-# 数据预览
-preview_indices = random.sample(range(len(samples)), 10)
-for idx in preview_indices:
-    sample = samples[idx].rstrip(token_end)
-    print(sample + token_end)
-print("-" * 40)
-
-# 打乱数据
-random.seed(42)
-random.shuffle(samples)
-
-# 划分训练集和验证集 (50% / 50%)
-# 这种极端划分是为了强迫模型去"猜"剩下的规律，而不是死记硬背
-n = int(0.5 * len(samples))
+# 划分训练集和验证集
+n = int(0.9 * len(samples))  # 90% 训练，10% 验证
 train_text = "".join(samples[:n])
 val_text = "".join(samples[n:])
 
 train_ids = np.array(encode(train_text), dtype=np.uint16)
 val_ids = np.array(encode(val_text), dtype=np.uint16)
-
-# 保存为 nanoGPT 能读取的 .bin 格式
 train_ids.tofile("data/grok/train.bin")
 val_ids.tofile("data/grok/val.bin")
 
-# 保存 meta 信息 (用于编解码，虽然这里只是简单的ID映射)
-import pickle
 
 meta = {
     "vocab_size": VOCAB_SIZE,
@@ -81,18 +88,23 @@ meta = {
 with open("data/grok/meta.pkl", "wb") as f:
     pickle.dump(meta, f)
 
-assert VOCAB_SIZE < 64 * 1024
-
-print(
-    f"VOCAB_SIZE={VOCAB_SIZE}, TrainTokenCount: {len(train_ids)}, ValTokenCount: {len(val_ids)}"
-)
-
-
+print(f"VocabSize: {VOCAB_SIZE}")
+print(f"Vocabs: {chars}")
+print(f"TrainTokenCount: {len(train_ids)}")
+print(f"ValTokenCount: {len(val_ids)}")
 print("-" * 40)
-x, y = get_batch("train", 12, 5, "cpu")
+
+# 数据预览
+print(f"SampleCount: {len(samples)}")
+for i in range(5):
+    print(f"{samples[i]}")
+print("-" * 40)
+
+# Batch 预览
+x, y = get_batch("train", block_size, 5, "cpu")
 for i in range(x.shape[0]):
     # print(f"> {i}")
-    # print(f"X:", "".join(map(itos.get, x[i].tolist())) + "_")
+    print(f"X:", "".join(map(itos.get, x[i].tolist())) + "_")
     print(f"Y:", "_" + "".join(map(itos.get, y[i].tolist())))
     # print(f"X:", x[i].tolist())
     # print(f"Y:", y[i].tolist())
