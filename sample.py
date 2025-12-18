@@ -18,7 +18,7 @@ out_dir = "grok/out"  # ignored if init_from is not 'resume'
 num_samples = 3  # number of samples to draw
 max_new_tokens = 6  # number of tokens generated in each sample
 temperature = (
-    0.8  # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
+    0.01  # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
 )
 top_k = (
     200  # retain only the top_k most likely tokens, clamp others to have 0 probability
@@ -119,7 +119,7 @@ def get_prompts_by_bin(source, n_grep):
 if start.startswith("FILE:"):
     prompts, expected = get_prompts_by_file()
 else:
-    prompts, expected = get_prompts_by_bin(start[4:], 100)
+    prompts, expected = get_prompts_by_bin(start[4:], 200)
 
 prompt_ids = [encode(p) for p in prompts]
 groups = {}

@@ -49,8 +49,8 @@ def get_batch(split, block_size, batch_size, device):
     ignore_id = stoi[token_ignore]
 
     # 4. 应用 Mask
-    y[:, :5] = ignore_id
-    y[:, -1] = ignore_id
+    y[:, : (6 - 1)] = ignore_id
+    y[:, -1:] = ignore_id
 
     if device == "cuda":
         x = x.pin_memory().to(device, non_blocking=True)
