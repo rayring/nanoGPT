@@ -1,11 +1,11 @@
 import os
 import numpy as np
+from datetime import datetime, timezone
 import pickle
 import torch
 from .config import dataset
 
 data_dir = os.path.join("data", dataset)
-
 _meta = None
 _meta_path = os.path.join(data_dir, "meta.pkl")
 
@@ -94,3 +94,7 @@ def estimate_accuracy(
         return correct, total
 
     return 0, 0
+
+
+def now():
+    return datetime.now(timezone.utc).strftime("%H:%M:%S.%f")

@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from model import GPTConfig, GPT
 from grok.utils import get_batch, get_meta, estimate_accuracy
+from grok.utils import now
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -389,7 +390,7 @@ while True:
 
         if iter_num < max_iters:
             print(
-                f"🥑 Iter {iter_num:>8} | Loss: {lossf:.5f} | Time: {dt:>8.2f}s | MFU: {running_mfu*100:>8.2f}%"
+                f"🥑 Iter {iter_num:>8} | Loss: {lossf:.5f} | Time: {dt:>8.2f}s | MFU: {running_mfu*100:>8.2f}% | {now()}"
             )
 
     iter_num += 1
