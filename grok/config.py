@@ -20,7 +20,7 @@ bias = False  # 去掉 bias 更有利于数学任务
 
 # 4. 优化器设置 (Grokking 的秘诀)
 learning_rate = 1e-3
-max_iters = 20000  # 训练步数要足够长！
+max_iters = 10000  # 训练步数要足够长！
 lr_decay_iters = max_iters
 min_lr = 1e-4
 beta2 = 0.99

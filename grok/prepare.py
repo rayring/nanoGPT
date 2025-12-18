@@ -22,7 +22,8 @@ def one_sample(a: int, op: str, b: int) -> str:
     # 每个数字/符号都是1个token：例如 123 -> '1','2','3'
     # 标准形式：12+34=+0046E
     sign = "+" if c >= 0 else "-"
-    answer = "".join(reversed(f"{sign}{abs(c):04d}"))
+    answer = f"{sign}{abs(c):04d}"
+    answer2 = "".join(reversed(answer))
     return f"{a:02d}{op}{b:02d}{token_eq}{answer}{token_end}"
 
 
