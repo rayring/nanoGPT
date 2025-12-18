@@ -1,14 +1,14 @@
 # 1. 输出设置
 out_dir = "grok/out"
-eval_interval = 200  # 每n步评估一次
-eval_iters = 40  # 评估时跑多少个batch
-log_interval = 40  # 每n步打印一次日志
+eval_interval = 100  # 每n步评估一次
+eval_iters = 10  # 评估时跑多少个batch
+log_interval = 20  # 每n步打印一次日志
 always_save_checkpoint = False  # 不用一直存模型，省空间
 
 # 2. 数据设置
 dataset = "grok"
-gradient_accumulation_steps = 4
-batch_size = 128  # 建议 512 或更大，直到显存占满 80% 左右
+gradient_accumulation_steps = 1
+batch_size = 512  # 建议 512 或更大，直到显存占满 80% 左右
 block_size = 32  # 建议 8 或 32 的倍数，以保证 GPU 处理效率
 
 # 3. 模型设置 (非常小的 Transformer)

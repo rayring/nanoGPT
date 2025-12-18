@@ -30,7 +30,8 @@ def one_sample(nums: list, ops: list) -> str:
     # 3. 格式化答案
     sign = "+" if c >= 0 else "-"
     answer = f"{sign}{abs(c)}"
-    text = f"{expression}{token_eq}{answer}{token_end}"
+    answerr_reversed = answer[::-1]
+    text = f"{expression}{token_eq}{answerr_reversed}{token_end}"
 
     # 5. Padding填充，实现定长
     if len(text) > block_size:
